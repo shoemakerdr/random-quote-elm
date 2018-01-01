@@ -1,6 +1,11 @@
-import Html exposing (Html, button, div, text, p)
+import Html exposing (Html, button, div, text, p, a)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Http exposing (..)
+import Json.Decode as JD exposing (string, decodeString, Decoder)
+import Json.Decode.Pipeline as Pipeline
+import Random
+import Random.List as RL
 
 
 franklin : Quote
@@ -11,7 +16,7 @@ main : Program Never Model Msg
 main =
   Html.program
     { init =
-        init franklin []
+        init franklin [] ""
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -25,19 +30,20 @@ main =
 type alias Model =
   { current : Quote
   , all : List Quote
+  , errorMessage : String
   }
 
 
 type alias Quote =
   { quote : String
-  , author : String
+  , name : String
   }
 
 
-init : Quote -> List Quote -> (Model, Cmd Msg)
-init current list =
-  ( Model current list
-  , Cmd.none
+init : Quote -> List Quote -> String -> (Model, Cmd Msg)
+init current list err =
+  ( Model current list err
+  , getQuotes
   )
 
 
@@ -46,27 +52,35 @@ init current list =
 
 
 type Msg
-  = Tweet
-  | FetchQuotes
+  = FetchQuotes (Result Http.Error (List Quote))
   | GetRandomQuote
-  | NewQuote Quote
+  | NewQuote (Maybe Quote, List Quote)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Tweet ->
-      (model, Cmd.none)
+    FetchQuotes (Ok quotes) ->
+      ( { model | all = quotes }, Cmd.none)
 
-    FetchQuotes ->
-      (model, Cmd.none)
+    FetchQuotes (Err error) ->
+      ( { model | errorMessage = toString error }, Cmd.none)
 
     GetRandomQuote ->
-      (model, Cmd.none)
+      (model, Random.generate NewQuote <| randomQuote model.all)
 
-    NewQuote current ->
-      ( { model | current = current }, Cmd.none)
+    NewQuote (current, _) ->
+      case current of
+        Just quote ->
+          ( { model | current = quote }, Cmd.none)
 
+        Nothing ->
+          ( { model | current = franklin }, Cmd.none)
+
+
+randomQuote : List Quote -> Random.Generator (Maybe Quote, List Quote)
+randomQuote quotes =
+  RL.choose quotes
 
 
 -- VIEW
@@ -76,15 +90,20 @@ view : Model -> Html Msg
 view model =
   let
     quote = model.current.quote
-    author = model.current.author
+    name = model.current.name
+    errorMessage = model.errorMessage
+    twitterUrl = "https://twitter.com/intent/tweet?hashtags=FreeCodeCamp&text=" ++ quote ++ " - " ++ name
   in
     div []
       [ div []
         [ p [style [("text-align", "center")] ] [ text quote ]
-        , p [style [("text-align", "center")] ] [ text ("- " ++ author)]
+        , p [style [("text-align", "center")] ] [ text ("- " ++ name)]
         ]
-      , button [ onClick Tweet ] [ text "Tweet This Quote" ]
+      , a [ href twitterUrl, target "__blank"]
+        [ button [] [ text "Tweet This Quote" ]
+        ]
       , button [ onClick GetRandomQuote ] [ text "New Quote" ]
+      , div [style [ ("color", "red") ] ] [ text errorMessage ]
       ]
 
 
@@ -101,15 +120,26 @@ subscriptions model =
 -- HTTP
 
 
--- getRandomGif : String -> Cmd Msg
--- getRandomGif topic =
-  -- let
-    -- url =
-      -- "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" ++ topic
-  -- in
-    -- Http.send NewGif (Http.get url decodeGifUrl)
+getQuotes : Cmd Msg
+getQuotes =
+  let
+    url = "https://raw.githubusercontent.com/shoemakerdr/RandomQuoteProject/master/quotes.json"
+  in
+    Http.send FetchQuotes (Http.get url quoteListDecoder)
 
 
--- decodeGifUrl : Decode.Decoder String
--- decodeGifUrl =
-  -- Decode.at ["data", "image_url"] Decode.string
+
+-- DECODER
+
+
+quoteDecoder : Decoder Quote
+quoteDecoder =
+  Pipeline.decode Quote
+  |> Pipeline.required "quote" string
+  |> Pipeline.required "name" string
+
+
+quoteListDecoder : Decoder (List Quote)
+quoteListDecoder =
+  JD.list quoteDecoder
+
