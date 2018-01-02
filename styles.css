@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css?family=Cabin:400,700');
+
+body {
+  font-family: 'Cabin', sans-serif;
+  margin: 16px;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  text-align: center;
+  background-color: blue;
+  color: white;
+  margin: 0;
+}
+
+.quote-wrapper {
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.quote {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.author {
+  font-size: 16px;
+  text-align: center
+}
+
+.button-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.button {
+  font-family: 'Cabin', sans-serif;
+  font-size: 16px;
+  color: white;
+  padding: 16px;
+  border: none;
+  background-color: blue;
+  cursor: pointer;
+  margin: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transition: background-color .3s, box-shadow .3s;
+  outline: none;
+}
+
+.button:hover {
+  background-color: #4f4ff7;
+  box-shadow: 5px 5px 0 #000;
+  transition: background-color .3s, box-shadow .3s;
+}
+
+.button:active {
+  box-shadow: 7px 7px 0 #000;
+  transition: box-shadow .3s;
+}
