@@ -1,5 +1,5 @@
-import Html exposing (Html, button, div, text, p, a)
-import Html.Attributes exposing (..)
+import Html exposing (Html, button, div, text, p, a, h1)
+import Html.Attributes exposing (rel, href, target, class)
 import Html.Events exposing (onClick)
 import Http exposing (..)
 import Json.Decode as JD exposing (string, decodeString, Decoder)
@@ -95,15 +95,18 @@ view model =
     twitterUrl = "https://twitter.com/intent/tweet?hashtags=FreeCodeCamp&text=" ++ quote ++ " - " ++ name
   in
     div []
-      [ div []
-        [ p [style [("text-align", "center")] ] [ text quote ]
-        , p [style [("text-align", "center")] ] [ text ("- " ++ name)]
+      [ h1 [ class "title" ] [ text "Elm Random Quote Generator"]
+      , div [ class "quote-wrapper"]
+        [ p [ class "quote" ] [ text quote ]
+        , p [ class "author" ] [ text name ]
         ]
-      , a [ href twitterUrl, target "__blank"]
-        [ button [] [ text "Tweet This Quote" ]
+      , div [ class "button-wrapper"]
+        [ a [ href twitterUrl, target "__blank"]
+          [ button [ class "button" ] [ text "Tweet This Quote" ]
+          ]
+        , button [ class "button", onClick GetRandomQuote ] [ text "New Quote" ]
         ]
-      , button [ onClick GetRandomQuote ] [ text "New Quote" ]
-      , div [style [ ("color", "red") ] ] [ text errorMessage ]
+      , div [] [ text errorMessage ]
       ]
 
 
